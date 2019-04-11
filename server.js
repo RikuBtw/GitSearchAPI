@@ -1,7 +1,8 @@
 const fetch = require("node-fetch");
 const express = require('express');
+const env = require('dotenv').config()
 
-const accessToken = '6964939e38e66381885ad25e912861d71f945675';
+const accessToken = env.parsed.GIT_HOST;
 const apiUrl = 'https://api.github.com/graphql';
 
 // Create an express server and a GraphQL endpoint
@@ -70,6 +71,38 @@ app.get('/user/:login', function (req, res) {
                                 name
                                 description
                             }
+                        }
+                    }
+                }
+            }
+        }
+    `;
+    fetchQuery(query, res);
+});
+
+//Users requests one
+app.get('/organization/:organization', function (req, res) {
+    query = `
+        query {
+            search(query: "org: ${req.params.organization}", type: REPOSITORY, first: 10) {
+                repositoryCount
+                edges {
+                    node {
+                        ... on Repository {
+                        name
+                        descriptionHTML
+                            languages(first:5) {
+                            totalCount
+                            edges{
+                                node{
+                                    name
+                                }
+                            }
+                        }
+                        stargazers {
+                            totalCount
+                        }
+                        updatedAt
                         }
                     }
                 }
