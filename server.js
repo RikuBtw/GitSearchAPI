@@ -81,7 +81,7 @@ app.get('/user/:login', function (req, res) {
 });
 
 //Users requests one
-app.get('/organization/:organization', function (req, res) {
+app.get('/organization/:organization/repositories', function (req, res) {
     query = `
         query {
             search(query: "org: ${req.params.organization}", type: REPOSITORY, first: 10) {
