@@ -1,90 +1,143 @@
 const fetch = require("node-fetch");
 const express = require('express');
 const env = require('dotenv').config()
+const _ = require('lodash');
 
 const accessToken = env.parsed.GIT_HOST;
 const apiUrl = 'https://api.github.com/graphql';
 
 // Create an express server and a GraphQL endpoint
-var app = express();
+const app = express();
 
 const fetchQuery = (query, res) => {
-    fetch(apiUrl, {
+    return fetch(apiUrl, {
         method: 'POST',
         body: JSON.stringify({ query }),
         headers: {
             'Authorization': `Bearer ${accessToken}`,
         },
-    })
+    });
+}
+
+const fetchQueryAndSend = (query, res) => {
+    fetchQuery(query, res)
     .then(res => res.text())
     .then(body => res.status(200).send(body))
 }
 
-//Users requests all
-app.get('/organization/:organization/users', function (req, res) {
-    query = `
-        query OrganizationUserPR {
-        organization(login: ${req.params.organization}) {
-            membersWithRole(first:20` + (req.query.after ? `after: ${req.query.after.replace(/(=)/g, '')}` : ``) + `) {
-                totalCount
-                    nodes {
-                        name
-                        login
-                        location
-                    }
-                pageInfo {
-                    hasNextPage
-                    endCursor
-                }
-            }
-        }
-    }
-    `;
-    fetchQuery(query, res);
-});
-//Users requests one
-app.get('/user/:login', function (req, res) {
-    query = `
-        query UserInformations {
-            repositoryOwner(login: ${req.params.login}) {
-                login
-                ... on User {
-                    bio
-                    followers {
-                        totalCount
-                    }
-                    location
-                    avatarUrl
-                    projects(last:5){
-                        totalCount
-                        edges{
-                            node{
-                                name
-                                body
-                            }
-                        }
-                    }
-                    repositories(last:5){
-                        totalCount
-                        edges{
-                            node{
-                                name
-                                description
-                            }
-                        }
-                    }
-                }
+//Organization infos
+app.get('/organization/:organization', function (req, res) {
+    const query = `
+        query {
+            organization(login:"${req.params.organization}") {
+                name
+                description
+                avatarUrl
+                location
+                url
             }
         }
     `;
-    fetchQuery(query, res);
+    fetchQueryAndSend(query, res);
 });
 
-//Users requests one
-app.get('/organization/:organization/repositories', function (req, res) {
-    query = `
+//All users
+app.get('/organization/:organization/users', function (req, res) {
+    const query = `
         query {
-            search(query: "org: ${req.params.organization}", type: REPOSITORY, first: 10) {
+            organization(login:"${req.params.organization}") {
+                membersWithRole(first:20` + (req.query.after ? `, after:"${req.query.after}"` : ``) + `) {
+                    totalCount
+                        nodes {
+                            name
+                            login
+                            location
+                        }
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                }
+            }
+        }
+    `;
+    fetchQueryAndSend(query, res);
+});
+
+//Users infos
+app.get('/user/:login', function (req, res) {
+    const query = `
+        query {
+            user(login:"${req.params.login}") {
+                login
+                bio
+                followers {
+                    totalCount
+                }
+                location
+                avatarUrl
+                repositories(last:5){
+                    totalCount
+                    edges{
+                        node{
+                            name
+                            description
+                        }
+                    }
+                }
+            }
+        }
+    `;
+    fetchQueryAndSend(query, res);
+});
+
+//User contributions
+function isValidNumberLikes(str) {
+    var n = Math.floor(Number(str));
+    return n !== Infinity && String(n) === str && n >= 0;
+}
+app.get('/user/:login/contributions', function (req, res) {
+    const query = `
+        query {
+            user(login:${req.params.login}) {
+                pullRequests(last:100` + (req.query.after ? `, after:"${req.query.after}"` : ``) + `){
+                    totalCount
+                    nodes{
+                        headRepository{
+                            id
+                            name
+                            owner {
+                             login
+                            }
+                            stargazers {
+                                totalCount
+                            }
+                        }
+                    }
+                    pageInfo {
+                        hasNextPage
+                        endCursor
+                    }
+                }
+            }
+        }   
+    `;
+    fetchQuery(query, res)
+        .then(res => res.text())
+        .then(body => {
+            pullRequests = JSON.parse(body).data.user.pullRequests.nodes;
+            pullRequests = _.uniqBy(pullRequests, 'headRepository.id');
+            pullRequests = _.filter(pullRequests, ({ headRepository }) => 
+                headRepository.stargazers.totalCount >= (isValidNumberLikes(req.query.likes) ? req.query.likes : 0));
+            res.status(200).send(pullRequests);
+        })
+});
+
+//3 most stared repo
+app.get('/organization/:organization/repositories', function (req, res) {
+    const query = `
+        query {
+            search(query: "org:${req.params.organization}", type: REPOSITORY, first: 3) {
                 repositoryCount
                 edges {
                     node {
@@ -109,7 +162,7 @@ app.get('/organization/:organization/repositories', function (req, res) {
             }
         }
     `;
-    fetchQuery(query, res);
+    fetchQueryAndSend(query, res);
 });
 
 app.listen(4000, () => console.log('Express GraphQL Server Now Running On localhost:4000/graphql'));
