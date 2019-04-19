@@ -25,7 +25,10 @@ const fetchQueryAndSend = (query, res) => {
     .then(body => res.status(200).send(body))
 }
 
+console.log('Available requests :');
+
 //Organization infos
+console.log('/organization/{organization}');
 app.get('/organization/:organization', function (req, res) {
     const query = `
         query {
@@ -42,6 +45,7 @@ app.get('/organization/:organization', function (req, res) {
 });
 
 //All users
+console.log('/organization/{organization}/users');
 app.get('/organization/:organization/users', function (req, res) {
     const query = `
         query {
@@ -65,6 +69,7 @@ app.get('/organization/:organization/users', function (req, res) {
 });
 
 //Users infos
+console.log('/user/{login}');
 app.get('/user/:login', function (req, res) {
     const query = `
         query {
@@ -96,6 +101,7 @@ function isValidNumberLikes(str) {
     var n = Math.floor(Number(str));
     return n !== Infinity && String(n) === str && n >= 0;
 }
+console.log('/user/{login}/contributions');
 app.get('/user/:login/contributions', function (req, res) {
     const query = `
         query {
@@ -134,6 +140,7 @@ app.get('/user/:login/contributions', function (req, res) {
 });
 
 //3 most stared repo
+console.log('/organization/{organization}/repositories');
 app.get('/organization/:organization/repositories', function (req, res) {
     const query = `
         query {
@@ -165,4 +172,4 @@ app.get('/organization/:organization/repositories', function (req, res) {
     fetchQueryAndSend(query, res);
 });
 
-app.listen(4000, () => console.log('Express GraphQL Server Now Running On localhost:4000/graphql'));
+app.listen(4000, () => console.log('\nExpress GraphQL Server Now Running On localhost:4000'));
