@@ -38,6 +38,7 @@ app.get('/organization/:organization', function (req, res) {
                 avatarUrl
                 location
                 url
+                email
             }
         }
     `;
@@ -50,12 +51,11 @@ app.get('/organization/:organization/users', function (req, res) {
     const query = `
         query {
             organization(login:"${req.params.organization}") {
-                membersWithRole(first:20` + (req.query.after ? `, after:"${req.query.after}"` : ``) + `) {
+                membersWithRole(first:18` + (req.query.after ? `, after:"${req.query.after}"` : ``) + `) {
                     totalCount
                         nodes {
-                            name
                             login
-                            location
+                            avatarUrl
                         }
                     pageInfo {
                         hasNextPage
@@ -75,7 +75,11 @@ app.get('/user/:login', function (req, res) {
         query {
             user(login:"${req.params.login}") {
                 login
+                name
                 bio
+                email
+                websiteUrl
+                url 
                 followers {
                     totalCount
                 }
@@ -102,15 +106,21 @@ app.get('/user/:login/organizations', function (req, res) {
     const query = `
         query {
             user(login:"${req.params.login}") {
-            organizations (first:20) {
+            organizations (first:10) {
                 nodes{
-                name
+                    name
+                    }
                 }
-            }
             }
         }
     `;
-    fetchQueryAndSend(query, res);
+    fetchQuery(query, res)
+        .then(res => res.text())
+        .then(body => {
+            organizations = JSON.parse(body).data.user.organizations.nodes;
+            organizations = _.uniqBy(organizations, 'name');
+            res.status(200).send(organizations);
+        })
 });
 
 //User contributions
