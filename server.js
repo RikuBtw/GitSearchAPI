@@ -96,6 +96,23 @@ app.get('/user/:login', function (req, res) {
     fetchQueryAndSend(query, res);
 });
 
+//Users organizations
+console.log('/user/{login}/organizations');
+app.get('/user/:login/organizations', function (req, res) {
+    const query = `
+        query {
+            user(login:"${req.params.login}") {
+            organizations (first:20) {
+                nodes{
+                name
+                }
+            }
+            }
+        }
+    `;
+    fetchQueryAndSend(query, res);
+});
+
 //User contributions
 function isValidNumberLikes(str) {
     var n = Math.floor(Number(str));
