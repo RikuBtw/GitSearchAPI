@@ -1,21 +1,22 @@
 {
-  "name": "cloud-server",
+  "name": "gitsearch-api",
   "version": "1.0.0",
-  "description": "GraphQL based web server",
+  "description": "GraphQL based API",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "server": "nodemon ./server.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "dotenv": "^7.0.0",
     "express": "^4.16.4",
-    "express-graphql": "^0.7.1",
-    "graphql": "^14.1.1",
+    "express-session": "^1.16.1",
     "lodash": "^4.17.11",
     "node-fetch": "^2.3.0",
-    "nodemon": "^1.18.10"
+    "qs": "^6.7.0",
+    "randomstring": "^1.1.5",
+    "request": "^2.88.0"
   }
 }
