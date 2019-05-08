@@ -20,24 +20,12 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(
-    session({
-        secret: randomString.generate(),
-        resave: false,
-        saveUninitialized: false
-    })
-);
-
 const fetchQuery = (req, res, query) => {
-    if (!req.session.access_token){
-        res.redirect('/');
-        return;
-    }
     return fetch(apiUrl, {
         method: 'POST',
         body: JSON.stringify({ query }),
         headers: {
-            'Authorization': `Bearer ${req.session.access_token}`,
+            'Authorization': req.headers.authorization,
         },
     });
 }
@@ -50,39 +38,8 @@ const fetchQueryAndSend = (req, res, query) => {
         .then(body => res.status(200).send(body));
 }
 
-app.post('/login', (req, res) => {
-    res.redirect(process.env.AUTH_HOST);
-});
-
-app.all('/redirect', (req, res) => {
-    const code = req.query.code;
-    const returnedState = req.query.state;
-    const csrf = req.query.csrf;
-    if (csrf === returnedState) {
-        request.post(
-            {
-                url:
-                    'https://github.com/login/oauth/access_token?' +
-                    qs.stringify({
-                        client_id: process.env.CLIENT_ID,
-                        client_secret: process.env.CLIENT_SECRET,
-                        code: code,
-                        redirect_uri: process.env.HOST + "/redirect",
-                        state: csrf
-                    })
-            },
-            (error, response, body) => {
-                req.session.access_token = qs.parse(body).access_token;
-                res.redirect(process.env.CLIENT_HOST);
-            }
-        );
-    } else {
-        res.redirect('/');
-    }
-});
-
 app.all('/', function (req, res) {
-    res.status(200).send([{'token': req.session.access_token}]);
+    res.status(200).send([{'token': ""}]);
 });
 
 
