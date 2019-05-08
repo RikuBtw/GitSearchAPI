@@ -1,11 +1,7 @@
 require('dotenv').config()
 
 const express = require('express');
-const session = require('express-session');
-const request = require('request');
 const fetch = require("node-fetch");
-const randomString = require('randomstring');
-const qs = require('qs');
 const _ = require('lodash');
 
 const apiUrl = 'https://api.github.com/graphql';
