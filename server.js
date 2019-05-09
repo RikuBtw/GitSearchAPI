@@ -133,7 +133,7 @@ app.get('/organization/:organization/members', function (req, res) {
 app.get('/member/:login', function (req, res) {
     const query = `
         query {
-            user(login:${req.params.login}) {
+            user(login:"${req.params.login}") {
                 login
                 name
                 url
@@ -158,7 +158,7 @@ function isValidNumberLikes(str) {
 app.get('/user/:login/contributions', function (req, res) {
     const query = `
         query {
-            user(login:${req.params.login}) {
+            user(login:"${req.params.login}") {
                 pullRequests(last:100` + (req.query.after ? `, after:"${req.query.after}"` : ``) + `){
                     totalCount
                     nodes{
