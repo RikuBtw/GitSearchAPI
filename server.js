@@ -21,7 +21,7 @@ const fetchQuery = (req, res, query) => {
         method: 'POST',
         body: JSON.stringify({ query }),
         headers: {
-            'Authorization': req.headers.authorization,
+            'Authorization': req.headers.authorization || 'Bearer ' + process.env.DEBUG_TOKEN ,
         },
     });
 }
@@ -39,28 +39,25 @@ app.all('/', function (req, res) {
 });
 
 
-//Users infos
+//Viewer infos
 app.get('/viewer', function (req, res) {
     const query = `
         query {
             viewer {
                 login
                 name
-                bio
-                email
-                websiteUrl
-                url 
-                followers {
-                    totalCount
-                }
-                location
                 avatarUrl
-                repositories(last:5){
+                repositories(last:5, orderBy: {field: UPDATED_AT, direction: ASC}){
                     totalCount
                     edges{
                         node{
+                            url
                             name
                             description
+                            forkCount
+                            stargazers {
+                                totalCount
+                            }
                         }
                     }
                 }
@@ -71,13 +68,13 @@ app.get('/viewer', function (req, res) {
 });
 
 //Users organizations
-app.get('/user/:login/organizations', function (req, res) {
+app.get('/organizations', function (req, res) {
     const query = `
         query {
-            user(login:"${req.params.login}") {
-            organizations (first:10) {
-                nodes{
-                    name
+            viewer {
+                organizations (first:10) {
+                    nodes{
+                        name
                     }
                 }
             }
@@ -86,7 +83,7 @@ app.get('/user/:login/organizations', function (req, res) {
     fetchQuery(req, res, query)
         .then(res => res.text())
         .then(body => {
-            organizations = JSON.parse(body).data.user.organizations.nodes;
+            organizations = JSON.parse(body).data.viewer.organizations.nodes;
             organizations = _.uniqBy(organizations, 'name');
             res.status(200).send(organizations);
         })
@@ -110,7 +107,7 @@ app.get('/organization/:organization', function (req, res) {
 });
 
 //All users
-app.get('/organization/:organization/users', function (req, res) {
+app.get('/organization/:organization/members', function (req, res) {
     const query = `
         query {
             organization(login:"${req.params.organization}") {
@@ -124,6 +121,28 @@ app.get('/organization/:organization/users', function (req, res) {
                         hasNextPage
                         endCursor
                     }
+                }
+            }
+        }
+    `;
+    fetchQueryAndSend(req, res, query);
+});
+
+
+//Viewer infos
+app.get('/member/:login', function (req, res) {
+    const query = `
+        query {
+            user(login:${req.params.login}) {
+                login
+                name
+                url
+                websiteUrl
+                avatarUrl
+                email
+                bio
+                followers {
+                    totalCount
                 }
             }
         }
