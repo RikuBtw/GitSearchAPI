@@ -39,11 +39,6 @@ const fetchQueryAndSend = (req, res, query) => {
         .then(body => res.status(200).send(body));
 }
 
-app.all('/', function (req, res) {
-    res.status(200).send([{'token': ""}]);
-});
-
-
 //Viewer infos
 app.get('/viewer', function (req, res) {
     const query = `
@@ -155,7 +150,7 @@ app.get('/member/:login', function (req, res) {
     fetchQueryAndSend(req, res, query);
 });
 
-//User contributions
+//User 5 best contributions
 function isValidNumberLikes(str) {
     var n = Math.floor(Number(str));
     return n !== Infinity && String(n) === str && n >= 0;
@@ -170,6 +165,7 @@ app.get('/user/:login/contributions', function (req, res) {
                         headRepository{
                             id
                             name
+                            url
                             owner {
                              login
                             }
@@ -191,9 +187,14 @@ app.get('/user/:login/contributions', function (req, res) {
         .then(body => {
             pullRequests = JSON.parse(body).data.user.pullRequests.nodes;
             pullRequests = _.uniqBy(pullRequests, 'headRepository.id');
-            pullRequests = _.filter(pullRequests, ({ headRepository }) => 
-                headRepository.stargazers.totalCount >= (isValidNumberLikes(req.query.likes) ? req.query.likes : 0));
-            res.status(200).send(pullRequests);
+            pullRequests = _.filter(pullRequests, ({ headRepository }) => {
+                if (headRepository){
+                    return headRepository.stargazers.totalCount >= (isValidNumberLikes(req.query.likes) ? req.query.likes : 0);
+                }
+            });
+            pullRequests = _.sortBy(pullRequests, 'headRepository.stargazers.totalCount')
+            pullRequests = _.slice(pullRequests, 0, 5)
+            res.status(200).send(pullRequests.reverse());
         })
 });
 
