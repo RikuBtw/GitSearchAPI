@@ -116,7 +116,7 @@ app.get('/organization/:organization/members', function (req, res) {
     const query = `
         query {
             organization(login:"${req.params.organization}") {
-                membersWithRole(first:18` + (req.query.after ? `, after:"${req.query.after}"` : ``) + `) {
+                membersWithRole(first:14` + (req.query.after ? `, after:"${req.query.after}"` : ``) + `) {
                     totalCount
                         nodes {
                             login
@@ -206,20 +206,19 @@ app.get('/organization/:organization/repositories', function (req, res) {
                 edges {
                     node {
                         ... on Repository {
-                        name
-                        descriptionHTML
+                            name
+                            url
                             languages(first:5) {
-                            totalCount
-                            edges{
-                                node{
-                                    name
+                                totalCount
+                                edges{
+                                    node{
+                                        name
+                                    }
                                 }
                             }
-                        }
-                        stargazers {
-                            totalCount
-                        }
-                        updatedAt
+                            stargazers {
+                                totalCount
+                            }
                         }
                     }
                 }
