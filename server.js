@@ -1,27 +1,32 @@
 require('dotenv').config()
 
 const express = require('express');
+const cookieParser = require('cookie-parser')
 const fetch = require("node-fetch");
 const _ = require('lodash');
 
 const apiUrl = 'https://api.github.com/graphql';
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 // Create an express server
 const app = express();
 
+
 app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Origin", process.env.CLIENT_HOST);
+    res.header("Access-Control-Allow-Credentials", true);
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
+
+app.use(cookieParser());
 
 const fetchQuery = (req, res, query) => {
     return fetch(apiUrl, {
         method: 'POST',
         body: JSON.stringify({ query }),
         headers: {
-            'Authorization': req.headers.authorization || 'Bearer ' + process.env.DEBUG_TOKEN ,
+            'Authorization': 'Bearer ' + (req.cookies.access_token),
         },
     });
 }
@@ -74,7 +79,7 @@ app.get('/organizations', function (req, res) {
             viewer {
                 organizations (first:10) {
                     nodes{
-                        name
+                        login
                     }
                 }
             }
@@ -84,7 +89,7 @@ app.get('/organizations', function (req, res) {
         .then(res => res.text())
         .then(body => {
             organizations = JSON.parse(body).data.viewer.organizations.nodes;
-            organizations = _.uniqBy(organizations, 'name');
+            organizations = _.uniqBy(organizations, 'login');
             res.status(200).send(organizations);
         })
 });
