@@ -26,7 +26,7 @@ const fetchQuery = (req, res, query) => {
         method: 'POST',
         body: JSON.stringify({ query }),
         headers: {
-            'Authorization': 'Bearer ' + (req.cookies.access_token),
+            'Authorization': 'Bearer ' + (req.cookies.access_token || process.env.FALLBACK_TOKEN),
         },
     });
 }
